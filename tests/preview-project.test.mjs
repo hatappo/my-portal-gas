@@ -8,7 +8,7 @@ import { withPreviewProject, withPreviewContent } from '../scripts/preview-proje
 import { server } from './helpers.mjs';
 
 test("Generate configured project links, hide missing ones, and reject invalid IDs", (t) => {
-  const root = mkdtempSync(path.join(tmpdir(), 'gas-portal-preview-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'my-portal-gas-preview-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const config = path.join(root, '.clasp.json');
   const html = readFileSync('src/Index.html', 'utf8');

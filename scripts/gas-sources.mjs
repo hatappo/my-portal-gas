@@ -19,6 +19,6 @@ export const serverGroups = {
   'Authorization.js': ['Authorization'],
   'Code.js': ['Settings', 'SpreadsheetSetup', 'GitHub', 'Slack', 'Calendar', 'Gmail', 'Code'],
   'Catalog.js': ['Catalog'],
-  'SheetCatalog.js': ['SheetCatalog'],
+  'SheetCatalog.js': ['SheetCatalog', 'BookmarkImport'],
 };
 export const serverSources = Object.values(serverGroups).flat().map((name) => `src/server/${name}.js`);

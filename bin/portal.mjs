@@ -6,7 +6,7 @@ import { createPreviewServer } from '../lib/preview.mjs';
 import { packageInfo } from '../lib/config.mjs';
 import { browse, deploy, deployments, login, push, status } from '../lib/remote.mjs';
 
-const help = `gas-portal ${packageInfo.version}
+const help = `my-portal-gas ${packageInfo.version}
 Usage: portal <command> [options]
 
   init [--script-id ID] [--auth-profile NAME] [--deployment-id ID]
@@ -42,10 +42,10 @@ export async function main(args = process.argv.slice(2), root = process.cwd()) {
   const { values } = parseArgs({ args: rest, options: definitions[command], allowPositionals: false });
   if (command === 'init') {
     init(root, { scriptId: values['script-id'], authProfile: values['auth-profile'], deploymentId: values['deployment-id'] });
-    console.log('Configuration is ready. Check scriptId and authProfile under "gas-portal" in package.json, then run npm install. Existing values were preserved.');
+    console.log('Configuration is ready. Check scriptId and authProfile under "my-portal-gas" in package.json, then run npm install. Existing values were preserved.');
   } else if (command === 'build') {
     const result = build(root);
-    console.log(`${result.output}: gas-portal ${result.version} / ${result.files.length} files`);
+    console.log(`${result.output}: my-portal-gas ${result.version} / ${result.files.length} files`);
   } else if (command === 'preview') {
     const port = Number(values.port ?? process.env.PORT ?? 4173);
     if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('port must be an integer between 1 and 65535.');

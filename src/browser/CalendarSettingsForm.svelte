@@ -10,6 +10,7 @@
   } = $props();
   const tr = (key: string, language: string, values = {}) => PortalI18n.t(key, language, values);
   const t = (key: string) => tr(key, props.state.language);
+  const workTimes = Array.from({ length: 49 }, (_, i) => String(Math.floor(i / 2)).padStart(2, '0') + ':' + (i % 2 ? '30' : '00'));
   let showSample = $state(false),
     sampleSilenced = $state(false);
   const sampleMinutes = () => props.draft.alertMinutes || 3;
@@ -128,6 +129,25 @@
               <span>{calendar.name || calendar.id}</span>
             </label>{/each}
         </div>
+        <div class="calendar-work-hours">
+          <h3>{t('Work hours (optional)')}</h3>
+          <p class="settings-help" id="calendar-work-help">{t('Fill free time within these hours, even without events. Events outside these hours remain visible. Uses the calendar display time zone.')}</p>
+          <div class="calendar-work-fields">
+            <label class="settings-field" for="calendar-work-start"><span>{t('Work starts')}</span>
+              <select id="calendar-work-start" class="select" value={props.draft.workStart || ''} aria-describedby="calendar-work-help" onchange={event => change({ workStart: event.currentTarget.value })}>
+                <option value="">{t('Not set')}</option>
+                {#each workTimes.slice(0, -1) as time}<option value={time}>{time}</option>{/each}
+              </select>
+            </label>
+            <label class="settings-field" for="calendar-work-end"><span>{t('Work ends')}</span>
+              <select id="calendar-work-end" class="select" value={props.draft.workEnd || ''} aria-describedby="calendar-work-help" onchange={event => change({ workEnd: event.currentTarget.value })}>
+                <option value="">{t('Not set')}</option>
+                {#each workTimes.slice(1) as time}<option value={time}>{time}</option>{/each}
+              </select>
+            </label>
+          </div>
+          {#if !PortalCalendar.validWorkHours(props.draft)}<p class="settings-help error-message" role="alert">{t('Set both times with the end after the start, or leave both unset.')}</p>{/if}
+        </div>
         <div class="calendar-notice-setting">
           <div class="calendar-notice-heading">
             <label id="calendar-alert-label" for="calendar-alert-select">
@@ -185,7 +205,7 @@
           )}
         </p>
       </section>
-      <button type="submit" class="btn preset-filled-primary-500">{t('Save changes')}</button>
+      <button type="submit" class="btn preset-filled-primary-500" disabled={!PortalCalendar.validWorkHours(props.draft)}>{t('Save changes')}</button>
     </fieldset>
   </form>
   {#if props.state.initialized && props.state.settingsError}<p
@@ -197,3 +217,11 @@
       {t('Saved')}
     </p>{/if}
 </div>
+
+<style>
+  .calendar-work-hours { margin-block: 1.25rem; }
+  .calendar-work-hours h3 { font-size: inherit; font-weight: 600; }
+  .calendar-work-fields { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; }
+  .calendar-work-fields .settings-field { flex: 1 1 8rem; max-width: 14rem; }
+  .error-message { color: var(--color-error-700-300); }
+</style>

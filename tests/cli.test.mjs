@@ -7,11 +7,11 @@ import { spawnSync } from 'node:child_process';
 import { JSDOM } from 'jsdom';
 import { init } from '../lib/init.mjs';
 import { build, buildPreview } from '../lib/build.mjs';
-import { GAS_FILES, packageInfo, readConfig, saveConfig, validateConfig } from '../lib/config.mjs';
+import { GAS_FILES, generatedRoot, packageInfo, readConfig, saveConfig, validateConfig } from '../lib/config.mjs';
 import { browse, deploy, login, push, runClasp } from '../lib/remote.mjs';
 
 function fixture(t, name = 'work-a') {
-  const root = mkdtempSync(path.join(tmpdir(), 'gas-portal-' + name + '-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'my-portal-gas-' + name + '-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   init(root, { scriptId: name + '-script', authProfile: name });
   return root;
@@ -28,7 +28,7 @@ function stub(list = [{ deploymentId: 'head' }, { deploymentId: 'web', versionNu
 test("Pin the dependency on init and preserve scripts, configuration, and ignore rules across reruns", (t) => {
   const root = fixture(t);
   const pkg = JSON.parse(readFileSync(path.join(root, 'package.json')));
-  assert.equal(pkg.devDependencies['gas-portal'], `https://github.com/hatappo/gas-portal/releases/download/v${packageInfo.version}/gas-portal-${packageInfo.version}.tgz`);
+  assert.equal(pkg.devDependencies['my-portal-gas'], `https://github.com/hatappo/my-portal-gas/releases/download/v${packageInfo.version}/my-portal-gas-${packageInfo.version}.tgz`);
   assert.equal(pkg.scripts.deploy, 'portal deploy');
   assert.equal(pkg.scripts.ship, 'npm run push && npm run deploy');
   assert.equal(pkg.scripts.browse, 'portal browse');
@@ -49,24 +49,24 @@ test("Pin the dependency on init and preserve scripts, configuration, and ignore
   assert.equal(JSON.parse(readFileSync(path.join(root, 'package.json'))).scripts.browse, 'custom-browse');
 });
 
-test("Store configuration under the gas-portal key and keep other package.json fields and indentation", (t) => {
+test("Store configuration under the my-portal-gas key and keep other package.json fields and indentation", (t) => {
   const root = fixture(t);
   const file = path.join(root, 'package.json');
-  assert.deepEqual(JSON.parse(readFileSync(file, 'utf8'))['gas-portal'], { scriptId: 'work-a-script', authProfile: 'work-a' });
+  assert.deepEqual(JSON.parse(readFileSync(file, 'utf8'))['my-portal-gas'], { scriptId: 'work-a-script', authProfile: 'work-a' });
   for (const indent of ['    ', '\t']) {
-    const pkg = { name: 'consumer', custom: { keep: true }, 'gas-portal': { scriptId: 'one' }, scripts: { test: 'node --test' } };
+    const pkg = { name: 'consumer', custom: { keep: true }, 'my-portal-gas': { scriptId: 'one' }, scripts: { test: 'node --test' } };
     writeFileSync(file, JSON.stringify(pkg, null, indent) + '\n');
     saveConfig(root, { scriptId: 'two', authProfile: 'work-a' });
-    assert.equal(readFileSync(file, 'utf8'), JSON.stringify({ ...pkg, 'gas-portal': { scriptId: 'two', authProfile: 'work-a' } }, null, indent) + '\n');
+    assert.equal(readFileSync(file, 'utf8'), JSON.stringify({ ...pkg, 'my-portal-gas': { scriptId: 'two', authProfile: 'work-a' } }, null, indent) + '\n');
     init(root, { scriptId: 'ignored' });
     const text = readFileSync(file, 'utf8');
     assert.ok(text.startsWith('{\n' + indent + '"name"'), 'init keeps the indentation');
-    assert.equal(JSON.parse(text)['gas-portal'].scriptId, 'two', 'init keeps the existing configuration');
+    assert.equal(JSON.parse(text)['my-portal-gas'].scriptId, 'two', 'init keeps the existing configuration');
   }
   writeFileSync(file, JSON.stringify({ name: 'consumer' }));
-  assert.throws(() => readConfig(root), /"gas-portal" is missing in package\.json/);
+  assert.throws(() => readConfig(root), /"my-portal-gas" is missing in package\.json/);
   for (const value of [null, [], 'text']) {
-    writeFileSync(file, JSON.stringify({ 'gas-portal': value }));
+    writeFileSync(file, JSON.stringify({ 'my-portal-gas': value }));
     assert.throws(() => readConfig(root), /must be a JSON object/);
   }
   rmSync(file);
@@ -76,11 +76,11 @@ test("Store configuration under the gas-portal key and keep other package.json f
 test("Preserve existing Release URLs and directory dependencies in either dependency section", (t) => {
   const root = fixture(t);
   for (const key of ['dependencies', 'devDependencies']) {
-    for (const dependency of ['file:../../hobby/gas-portal', 'https://github.com/hatappo/gas-portal/releases/download/v0.0.9/gas-portal-0.0.9.tgz']) {
-      writeFileSync(path.join(root, 'package.json'), JSON.stringify({ private: true, [key]: { 'gas-portal': dependency } }));
+    for (const dependency of ['file:../../hobby/my-portal-gas', 'https://github.com/hatappo/my-portal-gas/releases/download/v0.0.9/my-portal-gas-0.0.9.tgz']) {
+      writeFileSync(path.join(root, 'package.json'), JSON.stringify({ private: true, [key]: { 'my-portal-gas': dependency } }));
       init(root);
       const pkg = JSON.parse(readFileSync(path.join(root, 'package.json')));
-      assert.equal(pkg[key]['gas-portal'], dependency);
+      assert.equal(pkg[key]['my-portal-gas'], dependency);
       assert.equal(pkg[key === 'dependencies' ? 'devDependencies' : 'dependencies'], undefined);
     }
   }
@@ -322,4 +322,47 @@ test('Browse rejects missing, ambiguous, HEAD, and foreign deployments and propa
   writeFileSync(pkgFile, JSON.stringify(pkg));
   init(root);
   assert.equal(JSON.parse(readFileSync(pkgFile)).scripts.browse, 'portal browse');
+});
+
+test('Rename preserves legacy configuration and generated output ownership without choosing ambiguous targets', t => {
+  const root = fixture(t), file = path.join(root, 'package.json');
+  const config = { scriptId: 'keep-script', deploymentId: 'keep-deployment', authProfile: 'work' };
+  writeFileSync(file, JSON.stringify({ name: 'workspace', custom: 7, 'gas-portal': config }));
+  assert.deepEqual(readConfig(root, true), config);
+  saveConfig(root, config);
+  const saved = JSON.parse(readFileSync(file, 'utf8'));
+  assert.deepEqual(saved['my-portal-gas'], config); assert.equal(saved['gas-portal'], undefined); assert.equal(saved.custom, 7);
+  const dir = generatedRoot(root);
+  writeFileSync(path.join(dir, 'generated.json'), JSON.stringify({ generator: 'gas-portal' }));
+  assert.equal(generatedRoot(root), dir);
+  writeFileSync(file, JSON.stringify({ 'my-portal-gas': config, 'gas-portal': { scriptId: 'different' } }));
+  assert.throws(() => readConfig(root), /Keep only/);
+  assert.throws(() => init(root), /Keep only/);
+  writeFileSync(file, JSON.stringify({ 'gas-portal': config }));
+  init(root); assert.deepEqual(JSON.parse(readFileSync(file, 'utf8'))['my-portal-gas'], config);
+});
+
+test('The intermediate my-portal name migrates without changing the deployment target', t => {
+  const root = fixture(t), file = path.join(root, 'package.json');
+  const config = { scriptId: 'keep-script', deploymentId: 'keep-deployment', authProfile: 'work' };
+  for (const migrate of [saveConfig, init]) {
+    writeFileSync(file, JSON.stringify({ 'my-portal': config, custom: true }));
+    assert.deepEqual(readConfig(root, true), config);
+    migrate(root, config);
+    const saved = JSON.parse(readFileSync(file, 'utf8'));
+    assert.deepEqual(saved['my-portal-gas'], config);
+    assert.equal(saved['my-portal'], undefined);
+    assert.equal(saved.custom, true);
+  }
+  const dir = generatedRoot(root);
+  writeFileSync(path.join(dir, 'generated.json'), JSON.stringify({ generator: 'my-portal' }));
+  assert.equal(generatedRoot(root), dir);
+  for (const keys of [['my-portal-gas', 'my-portal'], ['my-portal', 'gas-portal']]) {
+    writeFileSync(file, JSON.stringify(Object.fromEntries(keys.map(key => [key, config]))));
+    assert.throws(() => readConfig(root), /Keep only/);
+    assert.throws(() => init(root), /Keep only/);
+    assert.throws(() => saveConfig(root, config), /Keep only/);
+  }
+  writeFileSync(file, JSON.stringify({ devDependencies: { 'my-portal': 'file:old' } }));
+  assert.throws(() => init(root), /Replace the my-portal dependency/);
 });

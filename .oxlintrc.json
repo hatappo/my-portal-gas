@@ -61,7 +61,7 @@
         "no-unused-vars": [
           "error",
           {
-            "varsIgnorePattern": "^(saveSidePanelExtensionIds|getGmailSettings|saveGmailSettings|getGmailActionItems|authorizePortal|getCalendarSettings|saveCalendarSettings|getCalendarChoices|getCalendarEvents|saveSlackBookmarkLimit|getSlackConnections|saveSlackConnection|disconnectSlack|getSlackActionItems|getSlackBookmarks|getGitHubConnections|saveGitHubConnection|disconnectGitHub|getGitHubActionItems|doGet|getCatalog|saveCatalogCacheTtl|saveActionsCacheTtl|normalizeCatalogCacheTtl_|readCachedSheetCatalog_|saveTheme|saveLanguage|include_|parseCatalog_|readSheetCatalog_|savePortalSettings|saveSpreadsheetSettings|createPortalSpreadsheet|saveUnblockedUrlSchemes|doGet|getPortalLanguage_|getPortalPropertyDefaults_|getPortalTheme_|getPortalUserProperties_|isPortalTheme_|normalizeActionsCacheTtl_|normalizeCatalogCacheTtl_|normalizePortalIcon_|normalizeSpreadsheetId_|parseCatalog_|readCachedSheetCatalog_|withPortalPropertiesLock_)$"
+            "varsIgnorePattern": "^(previewBookmarkImport|importBookmarks|saveSidePanelExtensionIds|getGmailSettings|saveGmailSettings|getGmailActionItems|authorizePortal|getCalendarSettings|saveCalendarSettings|getCalendarChoices|getCalendarEvents|saveSlackBookmarkLimit|getSlackConnections|saveSlackConnection|disconnectSlack|getSlackActionItems|getSlackBookmarks|getGitHubConnections|saveGitHubConnection|disconnectGitHub|getGitHubActionItems|doGet|getCatalog|saveCatalogCacheTtl|saveActionsCacheTtl|normalizeCatalogCacheTtl_|readCachedSheetCatalog_|saveTheme|saveLanguage|include_|parseCatalog_|readSheetCatalog_|savePortalSettings|saveSpreadsheetSettings|createPortalSpreadsheet|saveUnblockedUrlSchemes|doGet|getPortalLanguage_|getPortalPropertyDefaults_|getPortalTheme_|getPortalUserProperties_|isPortalTheme_|normalizeActionsCacheTtl_|normalizeCatalogCacheTtl_|normalizePortalIcon_|normalizeSpreadsheetId_|parseCatalog_|readCachedSheetCatalog_|withPortalPropertiesLock_)$"
           }
         ]
       }
@@ -149,6 +149,16 @@
       ],
       "rules": {
         "no-undef": "off"
+      }
+    },
+    {
+      "files": [
+        "src/server/BookmarkImport.js"
+      ],
+      "globals": {
+        "getSheetSource_": "readonly",
+        "withPortalPropertiesLock_": "readonly",
+        "sheetCatalogCacheKey_": "readonly"
       }
     }
   ]

@@ -189,3 +189,52 @@ test('Calendar display-name metadata is bounded and corrupt metadata does not re
   assert.equal(saved.ok, true);
   assert.ok(Buffer.byteLength(app.properties.CALENDAR_NAMES) < 9000);
 });
+
+test('Optional work hours persist per user, require a same-day half-hour range and can be cleared', () => {
+  const app = fixture();
+  for (const pair of [['09:00', '17:30'], ['00:00', '24:00'], ['', '']]) {
+    const settings = { ...app.settings, workStart: pair[0], workEnd: pair[1] };
+    assert.equal(app.context.saveCalendarSettings(settings).ok, true);
+    assert.deepEqual(plain(app.context.getCalendarSettings().settings), settings);
+  }
+  for (const [workStart, workEnd] of [['09:15', '17:00'], ['9:00', '17:00'], ['17:00', '09:00'], ['09:00', '09:00'], ['09:00', ''], ['', '17:00'], ['24:00', '24:00'], ['00:00', '24:30'], [null, '17:00']]) {
+    assert.equal(app.context.saveCalendarSettings({ ...app.settings, workStart, workEnd }).error, 'INVALID_INPUT');
+  }
+  assert.deepEqual(plain(server().context.getCalendarSettings().settings), { calendarIds: ['primary'], cacheSeconds: 300, alertMinutes: 0 });
+});
+
+test('Work hours fill empty days and edge gaps, extend to out-of-hours events, and preserve overlap rules', () => {
+  const model = server().context.PortalCalendar;
+  const window = { start: 9, end: 18 };
+  const events = pairs => pairs.map(([start, end], id) => ({ id: String(id), start, end, busy: true, allDay: false }));
+  const gaps = items => plain(items.filter(s => s.gap).map(s => [s.start, s.end]));
+  assert.deepEqual(gaps(model.slots([], 0, 24, true, window)), [[9, 18]]);
+  assert.deepEqual(gaps(model.slots(events([[10, 11], [14, 15]]), 0, 24, true, window)), [[9, 10], [11, 14], [15, 18]]);
+  const outside = events([[7, 8], [10, 12], [11, 13], [19, 20]]);
+  const slots = model.slots(outside, 0, 24, true, window);
+  assert.deepEqual(gaps(slots), [[8, 10], [13, 19]]);
+  assert.equal(slots.filter(s => !s.gap).length, 4);
+  assert.deepEqual(gaps(model.slots(events([[8, 19]]), 0, 24, true, window)), []);
+  assert.deepEqual(gaps(model.slots(outside, 0, 24, false, window)), []);
+  const allDay = { id: 'all', start: 0, end: 24, busy: true, allDay: true };
+  assert.deepEqual(gaps(model.slots([allDay], 0, 24, true, window)), []);
+  assert.deepEqual(gaps(model.slots([{ ...allDay, busy: false }], 0, 24, true, window)), [[9, 18]]);
+  assert.deepEqual(gaps(model.slots(events([[-1, 8], [19, 25]]), 0, 24, true, window)), [[8, 19]]);
+});
+
+test('Work hours use the displayed civil date and time zone, including DST and midnight endpoints', () => {
+  const model = server().context.PortalCalendar;
+  const bounds = (date, zone, workStart, workEnd) => {
+    const day = model.day(Date.parse(date + 'T12:00:00Z'), zone);
+    return model.workBounds({ ...model.defaults(), workStart, workEnd }, day.start, day.end, zone);
+  };
+  assert.deepEqual(plain(bounds('2026-11-24', 'Asia/Tokyo', '09:00', '17:30')), { start: Date.parse('2026-11-24T00:00:00Z'), end: Date.parse('2026-11-24T08:30:00Z') });
+  const spring = bounds('2026-03-08', 'America/New_York', '09:00', '17:00');
+  assert.equal(spring.start, Date.parse('2026-03-08T13:00:00Z')); assert.equal(spring.end - spring.start, 8 * 3600000);
+  const skipped = bounds('2026-03-08', 'America/New_York', '02:30', '04:00');
+  assert.equal(skipped.start, Date.parse('2026-03-08T07:00:00Z'));
+  const repeated = bounds('2026-11-01', 'America/New_York', '01:00', '01:30');
+  assert.equal(repeated.end - repeated.start, 90 * 60000);
+  const whole = bounds('2026-11-01', 'America/New_York', '00:00', '24:00');
+  assert.equal(whole.end - whole.start, 25 * 3600000);
+});
