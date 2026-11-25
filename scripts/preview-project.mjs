@@ -6,7 +6,7 @@ const themes = portalThemes();
 export function withPreviewContent(html, portal, theme = 'auto') {
   const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
   return html
-    .replace('<?!= sidePanelHead ?>', '')
+    .replace('<?!= sidePanelHead ?>', '<meta name="portal-preview" content="true">')
     .replace('<?= webAppUrl ?>', '')
     .replace('<? if (!portal.headline && !portal.description) { ?>hidden<? } ?>', !portal.headline && !portal.description ? 'hidden' : '')
     .replace('<? if (!portal.headline) { ?>hidden<? } ?>', !portal.headline ? 'hidden' : '')

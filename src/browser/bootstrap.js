@@ -42,5 +42,5 @@ export function initializePortal({ connectGitHub = initializeGitHub, connectSlac
   const calendar = connectCalendar(navigation.calendar);
   mountRefreshHints();
   initializeSearchShortcuts();
-  return { actions, calendar };
+  return { actions, calendar, navigation };
 }

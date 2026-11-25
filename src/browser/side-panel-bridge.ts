@@ -1,10 +1,23 @@
 import { allowedPanelAncestor, READY_MESSAGE } from './side-panel-protocol';
+import { installExternalNavigation, type PortalNavigation, type PanelConnection } from './external-navigation';
 let parentOrigin: string | undefined;
+let connection: PanelConnection | undefined;
 /** Reject unauthorized embedding before mounting controls or starting any RPCs. */
 export function allowSidePanel(): boolean {
   parentOrigin = undefined;
+  connection = undefined;
   const ids = document.querySelector<HTMLMetaElement>('meta[name="portal-extensions"]')?.content;
-  if (ids === undefined) return true;
+  if (ids === undefined) {
+    // Only mock previews on loopback hosts can negotiate navigation without the GAS allowlist.
+    const local = location.hostname === 'localhost' || location.hostname.endsWith('.localhost') || location.hostname === '127.0.0.1';
+    const query = new URLSearchParams(location.search);
+    const ancestors = Array.from(location.ancestorOrigins || []);
+    if (local && document.querySelector('meta[name="portal-preview"][content="true"]') && query.get('header') === 'external' &&
+      /^[a-f0-9]{32}$/.test(query.get('panelNonce') || '') && ancestors.length === 1 && /^chrome-extension:\/\/[a-p]{32}$/.test(ancestors[0])) {
+      connection = { origin: ancestors[0], nonce: query.get('panelNonce')!, external: true, preview: true };
+    }
+    return true;
+  }
   const ancestors = Array.from(location.ancestorOrigins || []);
   if (!allowedPanelAncestor(ancestors, ids.split(','))) {
     document.body.replaceChildren(document.createTextNode(PortalI18n.t('Open this portal in its configured extension or in a browser tab.', document.documentElement.lang)));
@@ -12,15 +25,19 @@ export function allowSidePanel(): boolean {
     return false;
   }
   parentOrigin = ancestors[ancestors.length - 1];
+  const nonce = document.querySelector<HTMLMetaElement>('meta[name="portal-panel-nonce"]')?.content || '';
+  if (/^[a-f0-9]{32}$/.test(nonce)) connection = { origin: parentOrigin, nonce, external: document.querySelector<HTMLMetaElement>('meta[name="portal-header"]')?.content === 'external', preview: false };
   document.getElementById('side-panel-guard')?.remove();
   return true;
 }
-export function notifySidePanelReady() {
-  const nonce = document.querySelector<HTMLMetaElement>('meta[name="portal-panel-nonce"]')?.content;
-  if (parentOrigin && nonce && /^[a-f0-9]{32}$/.test(nonce)) {
-    installBookmarkBridge(parentOrigin, nonce);
-    window.top?.postMessage({ type: READY_MESSAGE, nonce, capabilities: ['bookmarks-v1'] }, parentOrigin);
-  }
+export function notifySidePanelReady(navigation?: PortalNavigation) {
+  if (!connection) return;
+  const { origin, nonce, preview, external } = connection;
+  const capabilities = [];
+  if (!preview) { installBookmarkBridge(origin, nonce); capabilities.push('bookmarks-v1'); }
+  const bridge = external && navigation ? installExternalNavigation(connection, navigation) : undefined;
+  if (bridge) capabilities.push('navigation-v1');
+  window.top?.postMessage({ type: READY_MESSAGE, nonce, capabilities, navigation: bridge?.snapshot() }, origin);
 }
 
 let bookmarkBridgeInstalled = false;

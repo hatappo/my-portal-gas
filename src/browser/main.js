@@ -13,6 +13,6 @@ import { initializePortal } from './bootstrap.js';
 import { allowSidePanel, notifySidePanelReady } from './side-panel-bridge';
 
 if (allowSidePanel()) {
-  initializePortal();
-  notifySidePanelReady();
+  const portal = initializePortal();
+  notifySidePanelReady(portal.navigation);
 }

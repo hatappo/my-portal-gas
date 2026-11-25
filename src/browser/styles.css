@@ -697,3 +697,7 @@ button:focus-visible .pin-next { display: inline-flex; }
   button:hover .pin-current { display: none; }
   button:hover .pin-next { display: inline-flex; }
 }
+
+/* The extension owns navigation only after a successful handshake. */
+html[data-external-navigation="true"] { scroll-padding-top: 12px; }
+html[data-external-navigation="true"] .portal-layout main { padding-top: 12px; }
