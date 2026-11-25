@@ -1,4 +1,4 @@
-// Shared by the GAS browser bundle and the extension. Protocol version 1 supports readiness and explicit bookmark imports.
+// Side-panel protocol helpers for readiness, explicit bookmark imports and optional external navigation.
 export const READY_MESSAGE = 'gas-portal:side-panel-ready';
 export function normalizePortalUrl(input: string): string | null {
   try {

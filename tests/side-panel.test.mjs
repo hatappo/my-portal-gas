@@ -245,3 +245,75 @@ test('Bookmark bridge accepts only its bound parent, nonce and operation and nev
     send({ ...request, operation: 'import' }); success({ ok: true, added: 1 }); assert.equal(refreshed, true);
   } finally { dom.window.close(); }
 });
+
+test('External header requests are encoded only for authorized embedded requests', () => {
+  const normal = gasFixture(id);
+  normal.context.doGet({ parameter: { header: 'external' } });
+  assert.equal(normal.template.sidePanelHead, '');
+  const embedded = gasFixture(id);
+  embedded.context.doGet({ parameter: { sidePanel: '1', panelNonce: nonce, header: 'external' } });
+  assert.match(embedded.template.sidePanelHead, /name="portal-header" content="external"/);
+  embedded.context.doGet({ parameter: { sidePanel: '1', panelNonce: nonce, header: '"><script>' } });
+  assert.match(embedded.template.sidePanelHead, /name="portal-header" content="internal"/);
+});
+
+test('External navigation negotiates header ownership, validates commands and restores the local header', async () => {
+  const code = await bundleModule(`import { installExternalNavigation } from '../src/browser/external-navigation.ts'; window.install = installExternalNavigation;`);
+  const dom = new JSDOM('<header class="site-header">Navigation</header>', { runScripts: 'outside-only', url: 'https://abc-script.googleusercontent.com/' });
+  try {
+    const calls = [], sent = []; let changed;
+    const snapshot = { selected: 'links', pinned: false, language: 'en', tabs: [] };
+    dom.window.postMessage = (data, origin) => sent.push({ data, origin });
+    dom.window.eval(code);
+    const origin = 'chrome-extension://' + id;
+    const bridge = dom.window.install({ origin, nonce, external: true, preview: false }, {
+      snapshot: () => snapshot,
+      subscribe(fn) { changed = fn; return () => { changed = undefined; }; },
+      select(tab) { if (!['links','inbox-and-tasks','calendar','settings'].includes(tab)) return; calls.push(tab); snapshot.selected = tab; changed(); },
+      calendar: { pin(value) { calls.push(value); snapshot.pinned = value; changed(); } },
+    });
+    const send = (action, props = {}, envelope = {}) => dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      origin, source: dom.window, data: { type: 'my-portal:navigation-command', nonce, action, ...props }, ...envelope,
+    }));
+    const header = dom.window.document.querySelector('header');
+    assert.equal(header.hidden, false);
+    send('select', { tab: 'settings' }); assert.deepEqual(calls, []);
+    send('connect', {}, { origin: 'https://evil.test' });
+    send('connect', {}, { source: {} });
+    send('connect', { nonce: 'b'.repeat(32) });
+    assert.equal(header.hidden, false);
+    send('connect'); assert.equal(header.hidden, true);
+    assert.equal(sent.at(-1).data.state.attached, true);
+    send('select', { tab: 'settings' }); assert.equal(sent.at(-1).data.state.selected, 'settings');
+    send('select', { tab: 'https://evil.test' }); send('pin', { pinned: 'true' }); send('arbitraryRPC');
+    assert.deepEqual(calls, ['settings']);
+    send('pin', { pinned: true }); assert.equal(sent.at(-1).data.state.pinned, true);
+    send('disconnect'); assert.equal(header.hidden, false);
+    assert.equal(sent.at(-1).data.state.attached, false);
+    send('connect'); bridge.dispose(); assert.equal(header.hidden, false);
+    send('connect'); assert.equal(header.hidden, false);
+  } finally { dom.window.close(); }
+});
+
+test('Loopback mock previews expose navigation only and ordinary tabs keep their header', async () => {
+  const code = await bundleModule(`import { allowSidePanel, notifySidePanelReady } from '../src/browser/side-panel-bridge.ts'; if (allowSidePanel()) notifySidePanelReady(window.navigation);`);
+  for (const [url, marker, ancestors, expected] of [
+    ['http://localhost:4173', true, ['chrome-extension://' + id], true],
+    ['http://127.0.0.1:4173', true, [], false],
+    ['https://example.com', true, ['chrome-extension://' + id], false],
+    ['http://localhost:4173', false, ['chrome-extension://' + id], false],
+    ['http://localhost:4173', true, ['https://evil.test'], false],
+  ]) {
+    const dom = new JSDOM(`${marker ? '<meta name="portal-preview" content="true">' : ''}<header class="site-header">Navigation</header>`, { runScripts: 'outside-only', url: url + '?header=external&panelNonce=' + nonce });
+    try {
+      const sent = [];
+      Object.defineProperty(dom.window.location, 'ancestorOrigins', { value: ancestors });
+      dom.window.postMessage = data => sent.push(data);
+      dom.window.navigation = { snapshot: () => ({ selected: 'links' }), subscribe: () => () => {} };
+      dom.window.eval(code);
+      assert.equal(sent.length > 0, expected);
+      if (expected) assert.deepEqual(Array.from(sent.at(-1).capabilities), ['navigation-v1']);
+      assert.equal(dom.window.document.querySelector('header').hidden, false);
+    } finally { dom.window.close(); }
+  }
+});

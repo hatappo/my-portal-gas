@@ -127,5 +127,24 @@ export function initializeNavigation(motion) {
     applyRoute(window.location.hash);
   }
 
-  return { calendar };
+  const labels = ['Links', 'Inbox & Tasks', 'Calendar', 'Settings'];
+  return {
+    calendar,
+    snapshot() {
+      const language = document.documentElement.lang === 'ja' ? 'ja' : 'en';
+      return { language, selected: portalTabs[activeTab()].hash, pinned: pinned(),
+        tabs: portalTabs.map((tab, i) => ({ id: tab.hash, label: PortalI18n.t(labels[i], language) })) };
+    },
+    /** @param {string} id */
+    select(id) {
+      const index = portalTabs.findIndex(tab => tab.hash === id);
+      if (index >= 0) navigatePortalTab(index);
+    },
+    /** @param {() => void} listener */
+    subscribe(listener) {
+      const stops = [activeTab.subscribe(listener), pinned.subscribe(listener)];
+      document.addEventListener('portal:languagechange', listener);
+      return () => { stops.forEach(stop => stop()); document.removeEventListener('portal:languagechange', listener); };
+    },
+  };
 }

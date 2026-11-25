@@ -12,7 +12,7 @@ function doGet(event) {
   }
   const template = HtmlService.createTemplateFromFile('Index');
   template.sidePanelHead = embedded
-    ? '<style id="side-panel-guard">body{visibility:hidden}</style><meta name="portal-extensions" content="' + extensionIds.join(',') + '"><meta name="portal-panel-nonce" content="' + nonce + '">'
+    ? '<style id="side-panel-guard">body{visibility:hidden}</style><meta name="portal-extensions" content="' + extensionIds.join(',') + '"><meta name="portal-panel-nonce" content="' + nonce + '"><meta name="portal-header" content="' + (event?.parameter?.header === 'external' ? 'external' : 'internal') + '">'
     : '';
   const portal = getPortalContent_(properties);
   template.portal = portal;
