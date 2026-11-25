@@ -62,5 +62,5 @@ jobs:
         run: |
           flags=()
           if [[ "$RELEASE_TAG" == *-* ]]; then flags+=(--prerelease); fi
-          gh release create "$RELEASE_TAG" "release/gas-portal-${RELEASE_TAG#v}.tgz" \
+          gh release create "$RELEASE_TAG" "release/my-portal-gas-${RELEASE_TAG#v}.tgz" \
             --verify-tag --generate-notes --title "$RELEASE_TAG" "${flags[@]}"

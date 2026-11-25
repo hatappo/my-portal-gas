@@ -22,7 +22,7 @@ const demo = {
     { id: 'demo-expense', name: 'Expense service', description: 'Upload receipts and submit expense claims.', tags: ['Finance', 'Requests', 'Productivity'], url: 'https://example.com/#demo-expense' },
     { id: 'demo-guide', name: 'Workplace guide', description: 'Find work instructions and answers to common questions. Its icon comes from the icon column.', tags: ['Reference', 'Onboarding'], url: 'https://example.com/#demo-guide', icon: '📘' },
     { id: 'demo-request', name: 'Request forms', description: 'Open the forms you need for everyday requests.', tags: ['Finance', 'Requests'], url: 'https://example.com/#demo-request' },
-    { id: 'demo-workspace', name: 'Portal workspace', description: 'Open a local project in VS Code.', tags: ['Development'], url: 'vscode://file/path/to/my-portal' },
+    { id: 'demo-workspace', name: 'Portal workspace', description: 'Open a local project in VS Code.', tags: ['Development'], url: 'vscode://file/path/to/my-portal-gas' },
     { id: '', name: 'Local server', url: 'http://localhost:4174/' },
     { id: '', name: 'Inline note', url: 'data:text/plain,Hello' },
     { id: 'demo-z-blocked', name: 'Inline page', description: 'A data: URL. Blocked unless unblocked in Settings.', tags: ['Development'], url: 'data:text/html,Hello' },

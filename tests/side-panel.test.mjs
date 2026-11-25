@@ -148,7 +148,7 @@ test('Readiness targets the actual validated parent, including the second allowe
     const messages = [];
     dom.window.postMessage = (data, target) => messages.push({ data: JSON.parse(JSON.stringify(data)), target });
     dom.window.eval(code);
-    assert.deepEqual(messages, parent === id || parent === second ? [{ data: { type: READY_MESSAGE, nonce }, target: origin }] : []);
+    assert.deepEqual(messages, parent === id || parent === second ? [{ data: { type: READY_MESSAGE, nonce, capabilities: ['bookmarks-v1'] }, target: origin }] : []);
     dom.window.close();
   }
 });
@@ -175,7 +175,7 @@ test('The connection URL is supplied by GAS, including Workspace deployments and
   }
 });
 
-test('Alcove connection URLs include the template and select on click without a clipboard API', async () => {
+test('Connection settings show ordinary URLs and select on click without a clipboard API', async () => {
   const code = await bundleModule(`import '../src/shared/i18n.js'; import { initializeSidePanelSettings } from '../src/browser/side-panel-settings.js'; initializeSidePanelSettings();`);
   const markup = readFileSync('src/Index.html', 'utf8').match(/<div class="side-panel-connection">[\s\S]*?(?=\s*<form id="side-panel-settings-form")/)[0];
   const validUrl = 'https://script.google.com/a/example.org/macros/s/test/exec?authuser=1#links';
@@ -194,11 +194,11 @@ test('Alcove connection URLs include the template and select on click without a 
           continue;
         }
         const parsed = new URL(input.value);
-        assert.equal(parsed.searchParams.get('sidePanel'), '1');
-        assert.equal(parsed.searchParams.get('panelNonce'), '{nonce}');
+        assert.equal(parsed.searchParams.get('sidePanel'), null);
+        assert.equal(parsed.searchParams.get('panelNonce'), null);
         assert.equal(parsed.searchParams.get('authuser'), '1');
         assert.equal(parsed.hash, '#links');
-        assert.ok(input.value.includes('{nonce}'));
+        assert.equal(input.value, validUrl);
         assert.equal(input.readOnly, true);
         input.focus(); input.click();
         assert.deepEqual([input.selectionStart, input.selectionEnd], [0, input.value.length]);
@@ -220,4 +220,28 @@ test('Workspace URLs returned by GAS use the same domain validation in either pa
       }
     }
   }
+});
+
+test('Bookmark bridge accepts only its bound parent, nonce and operation and never proxies arbitrary RPCs', async () => {
+  const code = await bundleModule(`import '../src/shared/i18n.js'; import { allowSidePanel, notifySidePanelReady } from '../src/browser/side-panel-bridge.ts'; if (allowSidePanel()) notifySidePanelReady();`);
+  const origin = 'chrome-extension://' + id;
+  const dom = new JSDOM(`<html><head><meta name="portal-extensions" content="${id}"><meta name="portal-panel-nonce" content="${nonce}"></head><body></body></html>`, { runScripts: 'outside-only', url: 'https://abc-script.googleusercontent.com/' });
+  const calls = [], messages = []; let success;
+  try {
+    Object.defineProperty(dom.window.location, 'ancestorOrigins', { value: ['https://script.google.com', origin] });
+    dom.window.postMessage = (data, target) => messages.push({ data: JSON.parse(JSON.stringify(data)), target });
+    const runner = { withSuccessHandler(fn) { success = fn; return this; }, withFailureHandler() { return this; }, previewBookmarkImport(payload) { calls.push(['preview', payload]); }, importBookmarks(payload) { calls.push(['import', payload]); } };
+    dom.window.google = { script: { run: runner } };
+    dom.window.eval(code);
+    const request = { type: 'my-portal:bookmarks-request', nonce, requestId: 'b'.repeat(32), operation: 'preview', payload: { bookmarks: [{ name: 'A', url: 'https://a.test/', tags: [] }] } };
+    const send = (data = request, overrides = {}) => dom.window.dispatchEvent(new dom.window.MessageEvent('message', { data, origin, source: dom.window, ...overrides }));
+    send(request, { origin: 'https://evil.test' }); send(request, { source: {} }); send({ ...request, nonce: 'c'.repeat(32) }); send({ ...request, operation: 'deleteEverything' });
+    assert.equal(calls.length, 0);
+    send(); assert.equal(calls.length, 1);
+    send(); assert.equal(calls.length, 1); assert.equal(messages.at(-1).data.result.error, 'BOOKMARK_BUSY');
+    success({ ok: true, additions: [] });
+    assert.equal(messages.at(-1).target, origin); assert.equal(messages.at(-1).data.requestId, request.requestId);
+    let refreshed = false; dom.window.document.addEventListener('portal:bookmarks-imported', () => { refreshed = true; });
+    send({ ...request, operation: 'import' }); success({ ok: true, added: 1 }); assert.equal(refreshed, true);
+  } finally { dom.window.close(); }
 });

@@ -75,9 +75,9 @@ function getPortalFaviconUrl_(theme, icon) {
   const color = PortalThemes.resolve(theme).palette;
   const normalized = normalizePortalIcon_(icon);
   const supported = /^[A-Z\u3041-\u3096\u309d-\u309e\u30a1-\u30fa\u30fc-\u30fe]$/.test(normalized);
-  if (!supported) return 'https://hatappo.github.io/gas-portal/favicons/fallback.png';
+  if (!supported) return 'https://hatappo.github.io/my-portal-gas/favicons/fallback.png';
   const filename = /^[A-Z]$/.test(normalized) ? normalized : 'u' + normalized.charCodeAt(0).toString(16);
-  return 'https://hatappo.github.io/gas-portal/favicons/' + color + '/' + filename + '.png';
+  return 'https://hatappo.github.io/my-portal-gas/favicons/' + color + '/' + filename + '.png';
 }
 
 /** Embed only the approved static files in the template. @param {string} filename */

@@ -266,6 +266,7 @@ export function initializeCatalog(motion) {
     }
   }
 
+  document.addEventListener('portal:bookmarks-imported', () => loadCatalog(true));
   refresh.addEventListener('click', () => {
     if (refresh.disabled) return;
     loadCatalog(true);

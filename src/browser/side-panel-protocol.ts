@@ -1,4 +1,4 @@
-// Shared by the GAS browser bundle and the extension. This channel carries readiness only.
+// Shared by the GAS browser bundle and the extension. Protocol version 1 supports readiness and explicit bookmark imports.
 export const READY_MESSAGE = 'gas-portal:side-panel-ready';
 export function normalizePortalUrl(input: string): string | null {
   try {
@@ -11,7 +11,7 @@ export function normalizePortalUrl(input: string): string | null {
     const workspace = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(workspaceDomain);
     if (!standard && !workspace) return null;
     for (const key of url.searchParams.keys()) if (key !== 'authuser') return null;
-    if (url.hash && !/^#(?:links|inbox-and-tasks|settings(?:\/(?:appearance|sources|calendar|extension))?)$/.test(url.hash)) return null;
+    if (url.hash && !/^#(?:links|inbox-and-tasks|calendar|settings(?:\/(?:appearance|sources|calendar|extension))?)$/.test(url.hash)) return null;
     return url.href;
   } catch { return null; }
 }

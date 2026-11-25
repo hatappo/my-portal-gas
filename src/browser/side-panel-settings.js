@@ -41,13 +41,10 @@ function initializeConnectionUrl() {
   const url = normalizePortalUrl(input.value);
   help.hidden = Boolean(url);
   if (url) {
-    const connection = new URL(url);
-    connection.searchParams.set('sidePanel', '1');
-    connection.searchParams.set('panelNonce', '{nonce}');
-    input.value = connection.href.replace(/%7Bnonce%7D/gi, '{nonce}');
+    input.value = url;
   } else {
     input.value = '';
-    const message = 'Open the deployed web app (/exec) to get its Alcove connection URL. Not available in local preview or test deployments.';
+    const message = 'Open the deployed web app (/exec) to get its My Portal Extension connection URL. Not available in local preview or test deployments.';
     help.dataset.i18n = message;
     help.textContent = PortalI18n.t(message, document.documentElement.lang);
   }

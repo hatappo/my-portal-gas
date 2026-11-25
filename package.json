@@ -1,6 +1,6 @@
 {
-  "name": "gas-portal",
-  "version": "0.17.0",
+  "name": "my-portal-gas",
+  "version": "0.18.0",
   "description": "A personal work portal built with Google Apps Script.",
   "type": "module",
   "packageManager": "npm@12.2.2",
@@ -72,10 +72,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/hatappo/gas-portal.git"
+    "url": "https://github.com/hatappo/my-portal-gas.git"
   },
-  "homepage": "https://github.com/hatappo/gas-portal#readme",
+  "homepage": "https://github.com/hatappo/my-portal-gas#readme",
   "bugs": {
-    "url": "https://github.com/hatappo/gas-portal/issues"
+    "url": "https://github.com/hatappo/my-portal-gas/issues"
   }
 }

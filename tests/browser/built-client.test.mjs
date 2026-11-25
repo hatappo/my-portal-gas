@@ -43,7 +43,7 @@ test(`The packaged inline client survives document.write and initializes localiz
   assert.equal(await page.locator('#portal-settings-form').isVisible(), false);
   const input = page.locator('#side-panel-url');
   const url = await input.inputValue();
-  assert.equal(url, connectionUrl + '?sidePanel=1&panelNonce={nonce}');
+  assert.equal(url, connectionUrl);
   assert.equal(await page.locator('#side-panel-copy-url').count(), 0);
   await input.click();
   assert.deepEqual(await input.evaluate(el => [el.selectionStart, el.selectionEnd]), [0, url.length]);

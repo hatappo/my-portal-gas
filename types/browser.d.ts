@@ -41,6 +41,8 @@ type SlackBookmarksResponse = { ok: true; workspace: string; url: string; items:
 type SlackConnectionsResponse = { ok: true; connections: SlackConnectionInfo[] } | { ok: false; error: string };
 type SlackSaveResponse = { ok: true; connection: SlackConnectionInfo } | { ok: false; error: string };
 interface GasRunner {
+  previewBookmarkImport(input: unknown): void;
+  importBookmarks(input: unknown): void;
   getGmailSettings(): void;
   saveGmailSettings(settings: GmailSettings): void;
   getGmailActionItems(forceRefresh?: boolean): void;

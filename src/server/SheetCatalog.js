@@ -53,8 +53,7 @@ function readCachedSheetCatalog_(forceRefresh) {
   let key = '';
   try {
     // Version the key whenever cached catalog semantics change. Include the source, sharing one entry across duration choices.
-    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, JSON.stringify([source.id, source.name]), Utilities.Charset.UTF_8);
-    key = 'catalog-v7:' + digest.map((byte) => (byte & 255).toString(16).padStart(2, '0')).join('');
+    key = sheetCatalogCacheKey_(source);
     cache = CacheService.getUserCache();
   } catch { /* Cache availability must never prevent a live read. */ }
 
@@ -136,4 +135,10 @@ function parseSheetCatalog_(rows) {
   const catalog = parseCatalog_(entries);
   catalog.issues.forEach((issue) => { issue.row = sourceRows[issue.row - 1]; });
   return catalog;
+}
+
+/** @param {{id: string, name: string}} source */
+function sheetCatalogCacheKey_(source) {
+  const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, JSON.stringify([source.id, source.name]), Utilities.Charset.UTF_8);
+  return 'catalog-v7:' + digest.map((byte) => (byte & 255).toString(16).padStart(2, '0')).join('');
 }

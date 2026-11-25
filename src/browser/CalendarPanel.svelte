@@ -80,6 +80,7 @@
           view.snapshot.dayStart,
           view.snapshot.dayEnd,
           !view.snapshot.notices.length,
+          PortalCalendar.workBounds(view.settings, view.snapshot.dayStart, view.snapshot.dayEnd, view.snapshot.timeZone),
         )
       : [],
   );

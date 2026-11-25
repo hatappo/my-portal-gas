@@ -1,18 +1,24 @@
-# gas-portal
+# my-portal-gas
 
 A personal work portal built with Google Apps Script, with a CLI for building, previewing, and deploying separate work environments.
 
-Display links from a spreadsheet as cards or a list. Connect an existing spreadsheet or create a new one with a typed table and column notes from Settings. Links may use app schemes such as `vscode://`; script schemes are always blocked, and other risky schemes are blocked until you allow them in Settings (see [URL schemes](docs/usage.md#url-schemes)). Search by name, description, or tags; filter by tags; add related links as rows with a blank id below their tool; and customize the appearance with 24 standard [Skeleton](https://www.skeleton.dev/) themes and editable display text. The settings tab lets you switch between Japanese and English; your language preference is saved in User Properties. The initial selection follows browser preferences, with English as the fallback. Inbox & Tasks shows assigned GitHub issues, direct/team review requests, and changes requested on your own open PRs through user-managed fine-grained tokens. Slack saved-message search adds bookmarks to the same queue; see [Slack setup](docs/usage.md#slack-bookmarks). Configure up to three GitHub and three Slack connections in Settings. Optionally add [unread Gmail](docs/usage.md#gmail-unread-mail) from the executing Google account, using message headers without reading bodies or attachments. Inbox & Tasks combines their results into one deduplicated list with service labels and a single refresh button. Connections load in parallel, independently of the tool catalog, and share a configurable cache duration (five minutes by default). See [GitHub setup](docs/usage.md#github-action-items) for permissions, filters, and limitations.
+Display links from a spreadsheet as cards or a list. Connect an existing spreadsheet or create a new one with a typed table and column notes from Settings. Links may use app schemes such as `vscode://`; script schemes are always blocked, and other risky schemes are blocked until you allow them in Settings (see [URL schemes](docs/usage.md#url-schemes)). Search by name, description, or tags; filter by tags; add related links as rows with a blank id below their tool; and customize the appearance with 24 standard [Skeleton](https://www.skeleton.dev/) themes and editable display text. The settings tab lets you switch between Japanese and English; your language preference is saved in User Properties. The initial selection follows browser preferences, with English as the fallback. Inbox & Tasks shows assigned GitHub issues, direct/team review requests, and changes requested on your own open PRs through user-managed fine-grained tokens. Slack To-do search adds incomplete or unknown-status tasks, while saved messages appear in Links; see [Slack setup](docs/usage.md#slack-to-dos). Configure up to three GitHub and three Slack connections in Settings. Optionally add [unread Gmail](docs/usage.md#gmail-unread-mail) from the executing Google account, using message headers without reading bodies or attachments. Inbox & Tasks combines their results into one deduplicated list with service labels and a single refresh button. Connections load in parallel, independently of the tool catalog, and share a configurable cache duration (five minutes by default). See [GitHub setup](docs/usage.md#github-inbox--tasks) for permissions, filters, and limitations.
 
 **Consumer projects only need configuration and a package dependency.** The CLI generates GAS code under `.portal/`. Each work environment can use its own Google account, Apps Script project, and spreadsheet.
 
 Google Calendar has its own header tab and can be pinned above the other tabs, with compact past/future events, expanding hover/focus details, and free-time blocks between appointments. Select calendars, cache duration and optional in-page notices in Settings. Calendar access is read-only and uses the executing Google account. See [Calendar setup](docs/usage.md#google-calendar).
 
-[Alcove](https://github.com/hatappo/alcove) is a separate Chrome Side Panel extension for HTTPS web apps. Follow the [portal connection guide](docs/side-panel.md) to use this portal in Alcove; portal service tokens and settings stay in GAS.
+[My Portal Extension](https://github.com/hatappo/my-portal-ext) is the dedicated Chrome Side Panel companion. Keep multiple pages open and import selected Chrome bookmark folders into Links without changing existing entries. Follow the [connection and import guide](docs/side-panel.md); portal credentials stay in GAS.
+
+## Rename from gas-portal
+
+The package and configuration key are now `my-portal-gas`; the CLI command remains `portal`. Replace the old dependency with the new package and rename the consumer configuration key. Existing `.portal` output ownership markers and an old `my-portal` or `gas-portal` configuration key are still recognized; saving or initializing writes the new key. If multiple configuration keys exist, commands stop rather than choosing a deployment target.
+
+Historical release assets retain their original `gas-portal-VERSION.tgz` filenames. Use the asset actually attached to that release; the new filename below applies to releases published after the rename. Favicon hosting also moves to the repository's new GitHub Pages path; existing deployments need a new build/ship to use it.
 
 ## Installation
 
-Packages are distributed as `gas-portal-VERSION.tgz` assets on GitHub Releases, without publishing to the npm registry. Use the attached package from a published release in the public repository. GitHub's automatic Source code archives do not include the compiled assets.
+Packages are distributed as `my-portal-gas-VERSION.tgz` assets on GitHub Releases, without publishing to the npm registry. Use the attached package from a published release in the public repository. GitHub's automatic Source code archives do not include the compiled assets.
 
 Requirements: Node.js 26.13.1 or later within the 26.x series and npm 12.2.2 or later. To access GAS, enable the Apps Script API for the target Google account and sign in with clasp.
 
@@ -20,22 +26,22 @@ Requirements: Node.js 26.13.1 or later within the 26.x series and npm 12.2.2 or 
 # In a new directory for your work environment
 npm init -y
 # Use the .tgz URL from the release's Assets section
-npm install --save-dev --save-exact https://github.com/hatappo/gas-portal/releases/download/vVERSION/gas-portal-VERSION.tgz
+npm install --save-dev --save-exact https://github.com/hatappo/my-portal-gas/releases/download/vVERSION/my-portal-gas-VERSION.tgz
 npx portal init --script-id YOUR_SCRIPT_ID --auth-profile work-a
 npm run login
 npm run build
 npm run preview
 ```
 
-Replace `VERSION` with a [published release](https://github.com/hatappo/gas-portal/releases). Commit the dependency URL in package.json and the generated package-lock.json, then use `npm ci` for subsequent installations. To upgrade, run npm install with the new release's URL. Use a versioned URL rather than a mutable `latest` URL.
+Replace `VERSION` with a [published release](https://github.com/hatappo/my-portal-gas/releases). Commit the dependency URL in package.json and the generated package-lock.json, then use `npm ci` for subsequent installations. To upgrade, run npm install with the new release's URL. Use a versioned URL rather than a mutable `latest` URL.
 
-To test a local package, run `npm ci`, `npm run check`, and `npm run pack:local` in this repository, then install `releases/gas-portal-VERSION.tgz`. The packaging command refuses to overwrite an existing package with different contents at the same version.
+To test a local package, run `npm ci`, `npm run check`, and `npm run pack:local` in this repository, then install `releases/my-portal-gas-VERSION.tgz`. The packaging command refuses to overwrite an existing package with different contents at the same version.
 
 When `portal init` adds a dependency, it uses the GitHub Release URL for the running CLI's version. Existing configuration, dependency specifications, and npm scripts with matching names are preserved. The command also adds generated files and credentials to `.gitignore`. You can initialize before creating a GAS project and fill in the configuration in package.json later. Initialize the consumer's Git repository yourself if needed.
 
 ```text
 my-work-portal/
-├── package.json          # Includes the "gas-portal" configuration
+├── package.json          # Includes the "my-portal-gas" configuration
 ├── package-lock.json
 ├── .gitignore
 └── .portal/               # Not tracked by Git
@@ -48,13 +54,13 @@ my-work-portal/
 
 ## Environment configuration
 
-The configuration lives under the `"gas-portal"` key in the consumer's package.json. `portal deploy` rewrites only this key and keeps the other fields and the indentation.
+The configuration lives under the `"my-portal-gas"` key in the consumer's package.json. `portal deploy` rewrites only this key and keeps the other fields and the indentation.
 
 ```json
 {
   "name": "my-work-portal",
   "private": true,
-  "gas-portal": {
+  "my-portal-gas": {
     "scriptId": "YOUR_SCRIPT_ID",
     "authProfile": "work-a",
     "deploymentId": "YOUR_WEB_APP_DEPLOYMENT_ID"
@@ -135,7 +141,7 @@ npm ci
 npm run build
 
 # In the consumer project: adjust the relative path to your layout
-npm install --save-dev --install-links=false ../../hobby/gas-portal
+npm install --save-dev --install-links=false ../../hobby/my-portal-gas
 npm run preview
 ```
 
@@ -143,7 +149,7 @@ Add `install-links=false` to the consumer's `.npmrc` to keep the dependency as a
 
 ## Slack saved-message probe
 
-Before implementing [Slack Inbox & Tasks (#6)](https://github.com/hatappo/gas-portal/issues/6), test saved-message search from a source checkout. No GAS deployment is needed; the script makes two read-only requests directly to Slack and writes no files.
+Before implementing [Slack Inbox & Tasks (#6)](https://github.com/hatappo/my-portal-gas/issues/6), test saved-message search from a source checkout. No GAS deployment is needed; the script makes two read-only requests directly to Slack and writes no files.
 
 1. Create an internal app for your test workspace at [Your Apps](https://api.slack.com/apps).
 2. Under **OAuth & Permissions → Scopes → User Token Scopes**, add `search:read`. This allows searching content accessible to the user, not just saved messages. No write scope or bot token is needed.
@@ -231,7 +237,7 @@ Images load lazily, independently of the catalog, and use the browser's normal H
 
 ## Favicon hosting
 
-The GAS page uses a public PNG selected from its saved theme and icon letter. The assets are hosted at `https://hatappo.github.io/gas-portal/favicons/<theme>/<character>.png`. A–Z retain their letter filenames; hiragana and katakana use lowercase Unicode code point filenames, such as `u3042.png` for あ. Supported kana include voiced and semi-voiced letters, small kana, historical ゐ/ゑ and ヰ/ヱ, iteration marks, and ー. Combining dakuten and handakuten are composed before validating the one-character setting. Other characters, including kanji and emoji, remain unchanged in the portal header and use the shared `favicons/fallback.png`: the 玄 glyph from [Kouzan Brush Font Sousho](https://opentype.jp/kouzansousho.htm) by Aoyagi Kouzan in iron indigo on a transparent background. It is identical for all themes; explicitly selecting `P` still uses the normal letter icon. The favicon uses the selected palette in either light or dark mode; the default palette is Cerberus. Reload the page after changing the theme or letter to update the browser tab icon; the browser may also cache the image.
+The GAS page uses a public PNG selected from its saved theme and icon letter. The assets are hosted at `https://hatappo.github.io/my-portal-gas/favicons/<theme>/<character>.png`. A–Z retain their letter filenames; hiragana and katakana use lowercase Unicode code point filenames, such as `u3042.png` for あ. Supported kana include voiced and semi-voiced letters, small kana, historical ゐ/ゑ and ヰ/ヱ, iteration marks, and ー. Combining dakuten and handakuten are composed before validating the one-character setting. Other characters, including kanji and emoji, remain unchanged in the portal header and use the shared `favicons/fallback.png`: the 玄 glyph from [Kouzan Brush Font Sousho](https://opentype.jp/kouzansousho.htm) by Aoyagi Kouzan in iron indigo on a transparent background. It is identical for all themes; explicitly selecting `P` still uses the normal letter icon. The favicon uses the selected palette in either light or dark mode; the default palette is Cerberus. Reload the page after changing the theme or letter to update the browser tab icon; the browser may also cache the image.
 
 Run `npm run build:favicons` to generate 207 letter PNGs per theme (4,968 for the 24 palettes) plus one shared fallback, all at 64 × 64, and a gallery in `site/`. Each theme's icon uses its Skeleton `primary-500` color with `primary-contrast-500` for the letter; letter outlines use the bundled development dependencies Libre Baskerville (A–Z) and Shippori Mincho (kana). The unchanged fallback glyph outline lives in `src/assets/favicon-fallback.svg` and is rasterized during the build. The font publisher permits commercial and logo use; the original font binary is not bundled. See NOTICE for provenance. No system fonts or rendering service are required, and generated files are not committed or included in the GAS package.
 

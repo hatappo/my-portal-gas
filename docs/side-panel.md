@@ -1,25 +1,36 @@
-# Connect this portal to Alcove
+# Connect My Portal Extension
 
-[Alcove](https://github.com/hatappo/alcove) is an independently maintained Chrome Side Panel extension for HTTPS web apps. Its source, build commands, browser tests, and development ZIP releases now live in that repository. gas-portal no longer builds or distributes the extension; v0.15.0 is the last release with a bundled extension archive.
+[My Portal Extension](https://github.com/hatappo/my-portal-ext) is the dedicated Chrome Side Panel companion. Both repositories build independently. The extension retains multiple HTTPS pages, page state, and a screen-sharing blackout control.
 
-## Setup
+## Connect
 
-1. Install or build Alcove using its README. It is not yet published on the Chrome Web Store.
-2. Ship this portal and open its deployed `/exec` URL in a normal browser tab.
-3. In Alcove settings, click the **Extension ID** field and copy it.
-4. In the portal's **Settings → Extension → Alcove Chrome extension**, paste it into **Additional allowed extension ID** and save.
-5. Click the portal's **Alcove connection URL**, copy it, and register it as a page URL in Alcove. It includes `sidePanel=1&panelNonce={nonce}`. The URL is unavailable in local preview or `/dev` deployments.
+1. Build/install the extension using its README. Chrome Web Store publication is still pending.
+2. Deploy the portal and open its ordinary `/exec` page.
+3. Copy **Extension ID** from extension settings and save it under **Settings → Extension → Additional allowed extension ID** in the portal.
+4. Register the portal's ordinary deployment URL as a page in the extension. The portal's extension settings also show this URL for selection and copying.
 
-The additional ID belongs to the executing user's `SIDE_PANEL_EXTENSION_IDS` User Property. One ID can be saved; known official IDs are merged by the portal. Previously stored multi-ID values are rejected until replaced with one ID. The official list is currently empty. Allowlist edits take effect on the next page load without redeploying; removing an ID does not terminate an already-loaded page.
+Connection parameters are added internally. A fresh per-frame nonce is generated for the first load or explicit reload; switching to an already-open page preserves it. **Open tab** uses the ordinary URL. No `{nonce}` template or parameter-set configuration is needed. Local preview and `/dev` are not deployed portal connections.
 
-## Moving from the bundled extension
+## Import bookmarks into Links
 
-Build Alcove from its own repository and load its `extension/.output/chrome-mv3` directory. Moving the unpacked extension directory can change its ID and its local settings storage. Keep the old installation until you have copied its registered page URLs and checked the new installation. Register the new ID in the portal before opening it through Alcove.
+Open a connected portal, then select **Import bookmarks** in the extension footer. Grant optional bookmark access, select a folder, optionally use its folder names as tags, and choose **Preview additions**. Check the destination and additions before choosing **Add to spreadsheet**.
 
-## Embedding protection
+- Up to 1,000 selected bookmarks, including descendants. Other folders never leave the extension.
+- Only HTTP(S) URLs. Compare trimmed URLs exactly; fragments, queries, and path case remain significant.
+- Skip URLs found in any existing row, including hidden rows and child/related links, or earlier in the selected batch.
+- Add top-level entries with generated IDs. Existing entries are never edited or deleted. Columns are mapped by header name (`id`, `name`, `url` required).
+- Values are written as literal strings, not formulas. Sheets appends rows and extends a matching table without overwriting an existing row.
+- The destination and URLs are rechecked at confirmation. Imports in the same GAS project are serialized; separate projects and manual edits do not share the lock. Avoid simultaneous imports or header changes.
+- Invalidate the user's Links cache and refresh the portal after successful additions. If the response is uncertain, preview again before retrying.
 
-Ordinary portal requests retain GAS's default frame protection. Embedded requests require an allowlist and a valid nonce before loading the catalog. The embedded page starts hidden and checks `location.ancestorOrigins` before mounting: the top ancestor must be an allowlisted extension and intermediate ancestors must be GAS origins. Otherwise the portal displays an inert explanation.
+Direct writes use the existing `drive.file` scope, normally for spreadsheets created by this portal. Supplying the ID of an arbitrary spreadsheet does not grant the app write access. No new Google scopes are requested. The extension can export TSV when direct writing is unavailable; after preview it exports only additions. Before preview, the export has not been deduplicated against the spreadsheet.
 
-This is browser-side embedding protection, not authentication. Google sign-in and deployment access restrictions still apply. Keep the web app private; do not weaken Google account or browser security to work around embedding errors. Sign-in may require opening the ordinary portal URL in a normal tab first. Organization policies may prevent embedding.
+## Security and deployment
 
-The portal's existing readiness message remains available for earlier clients; Alcove does not consume it. Portal service tokens remain in GAS and are not copied into the extension's configuration. The eight-file GAS output contract is unchanged.
+The portal renders its embedding mode only for configured extension IDs. Requests must match the authorized parent origin, parent Window, random nonce, and request ID. The `bookmarks-v1` capability enables only the preview and import RPCs; there is no arbitrary RPC proxy. Google and service credentials remain in GAS. Bookmark payloads are not logged or stored in User Properties.
+
+The readiness message retains its original wire name for deployed-client compatibility. The eight-file GAS output contract and standalone `Authorization.gs` are unchanged.
+
+Moving an unpacked extension to a new checkout path can change its ID and settings storage. Copy registered page URLs before changing directories, load the new extension, and allow its new ID in each portal. Keep the old installation until the replacement works.
+
+Build both projects, reload the unpacked extension, and ship the portal. Browser tests exercise mocked nested GAS frames and confirmation flows; Google sign-in, optional-permission prompts, and actual Sheets writes need a deployed smoke test.

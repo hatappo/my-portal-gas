@@ -1,4 +1,4 @@
-gas-portal uses the Lucide external-link, refresh-cw, layout-grid, list,
+my-portal-gas uses the Lucide external-link, refresh-cw, layout-grid, list,
 tool-case, list-checks, settings, calendar-days, calendar-off, pin, pin-off,
 bell-off, coffee, eye, and eye-off icons.
 Their ISC and applicable MIT copyright/license notices are retained in
@@ -6,14 +6,14 @@ src/assets/*.svg, the distributed assets/external-link.svg, and the
 generated HTML that embeds these icons.
 
 Runtime dependencies @google/clasp and Vite are installed separately by npm
-and retain their own licenses. They are not copied into gas-portal's sources.
+and retain their own licenses. They are not copied into my-portal-gas's sources.
 
 Generated favicon images use Libre Baskerville, copyright 2012 The Libre
 Baskerville Project Authors (https://github.com/impallari/Libre-Baskerville),
 licensed under SIL Open Font License 1.1. The font is a development-only
 npm dependency. Its full license is copied to the published favicon site
 as FONT-LICENSE.txt. Font binaries are not included in the GAS output.
-The separately maintained Alcove extension retains its own artwork notices.
+The separately maintained My Portal Extension extension retains its own artwork notices.
 
 Generated kana favicons use Shippori Mincho, copyright 2021 The Shippori
 Mincho Project Authors (https://github.com/fontdasu/ShipporiMincho), licensed

@@ -22,7 +22,7 @@ test('Generate all supported theme and letter combinations as 64px PNG assets wi
     assert.equal(readdirSync(path.join(destination, 'favicons', name)).length, 207);
     for (const letter of letters) {
       const url = new URL(context.getPortalFaviconUrl_(name, letter));
-      const relative = url.pathname.replace('/gas-portal/', '');
+      const relative = url.pathname.replace('/my-portal-gas/', '');
       const png = readFileSync(path.join(destination, relative));
       assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
       assert.equal(png.readUInt32BE(16), 64);
@@ -49,7 +49,7 @@ test('Generate all supported theme and letter combinations as 64px PNG assets wi
 
 test('Use safe favicon fallbacks and normalize ASCII letters without exposing arbitrary settings in URLs', () => {
   const { context } = server();
-  const base = 'https://hatappo.github.io/gas-portal/favicons/';
+  const base = 'https://hatappo.github.io/my-portal-gas/favicons/';
   assert.equal(context.getPortalFaviconUrl_('dracula', 'p'), base + 'dracula/P.png');
   assert.equal(context.getPortalFaviconUrl_('dracula-light', 'p'), base + 'dracula/P.png');
   assert.equal(context.getPortalFaviconUrl_('dracula-dark', 'p'), base + 'dracula/P.png');
@@ -73,7 +73,7 @@ test('Set the outer GAS page favicon from the executing user settings', () => {
   });
   context.getCatalog = () => ({ ok: true, tools: [], issues: [] });
   assert.equal(context.doGet(), output);
-  assert.equal(favicon, 'https://hatappo.github.io/gas-portal/favicons/dracula/M.png');
+  assert.equal(favicon, 'https://hatappo.github.io/my-portal-gas/favicons/dracula/M.png');
 });
 
 
@@ -81,7 +81,7 @@ test('Resolve kana, small letters, voiced letters, and iteration marks to stable
   const { context } = server();
   for (const letter of ['あ', 'ぁ', 'っ', 'ゃ', 'が', 'ぱ', 'ゔ', 'ゕ', 'ゖ', 'ゐ', 'ゝ', 'ゞ', 'ア', 'ァ', 'ッ', 'ャ', 'ガ', 'パ', 'ヴ', 'ヷ', 'ヺ', 'ヵ', 'ヶ', 'ー', 'ヽ', 'ヾ']) {
     assert.ok(letters.includes(letter));
-    assert.equal(context.getPortalFaviconUrl_('dracula', letter), 'https://hatappo.github.io/gas-portal/favicons/dracula/u' + letter.charCodeAt(0).toString(16) + '.png');
+    assert.equal(context.getPortalFaviconUrl_('dracula', letter), 'https://hatappo.github.io/my-portal-gas/favicons/dracula/u' + letter.charCodeAt(0).toString(16) + '.png');
   }
   assert.equal(context.getPortalFaviconUrl_('dracula', 'か\u3099'), context.getPortalFaviconUrl_('dracula', 'が'));
   assert.equal(context.getPortalContent_({ PORTAL_ICON: 'は\u309a' }).icon, 'ぱ');

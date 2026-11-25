@@ -10,7 +10,7 @@ import { sharedSources } from '../scripts/gas-sources.mjs';
 import ts from 'typescript';
 
 test("Build stays offline, removes stale data, and preserves output after syntax errors", (t) => {
-  const root = mkdtempSync(path.join(tmpdir(), 'gas-portal-build-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'my-portal-gas-build-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   cpSync('src', path.join(root, 'src'), { recursive: true });
   mkdirSync(path.join(root, 'scripts'));

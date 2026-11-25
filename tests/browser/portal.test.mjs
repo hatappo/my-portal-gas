@@ -2079,3 +2079,39 @@ test('Header stays visible while scrolling at desktop and compact widths, with u
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   }
 });
+
+for (const locale of ['en-US', 'ja-JP']) test(`Optional work hours persist and create an empty-day free slot (${locale})`, async t => {
+  const page = await calendarPage(t, 'empty', { locale, viewport: { width: 390, height: 900 }, reducedMotion: 'reduce' });
+  assert.equal(await page.locator('.calendar-event.is-gap').count(), 0);
+  await selectPortalTab(page, 'settings');
+  await page.locator('#settings-tab-calendar').click();
+  const start = page.locator('#calendar-work-start'), end = page.locator('#calendar-work-end');
+  await start.waitFor();
+  assert.equal(await start.inputValue(), '');
+  assert.equal(await start.locator('option').count(), 49);
+  assert.equal(await end.locator('option').last().getAttribute('value'), '24:00');
+  await start.selectOption('09:00');
+  const save = page.locator('.calendar-settings button[type="submit"]');
+  assert.equal(await save.isDisabled(), true);
+  await end.selectOption('17:30');
+  await save.click();
+  await page.locator('.calendar-settings .settings-form-status').waitFor();
+  await page.reload();
+  await page.locator('.calendar-settings fieldset:not([disabled])').waitFor();
+  assert.equal(await start.inputValue(), '09:00'); assert.equal(await end.inputValue(), '17:30');
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  }
+  await page.locator('.calendar-work-hours').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `/tmp/my-portal-gas-work-hours-${locale}.png`, fullPage: true });
+  await selectPortalTab(page, 'calendar');
+  await page.locator('.calendar-event.is-gap').waitFor();
+  assert.equal(await page.locator('.calendar-event.is-gap').count(), 1);
+  assert.match(await page.locator('.calendar-event.is-gap .calendar-event-time').textContent(), /09:00/);
+  await selectPortalTab(page, 'settings');
+  await start.selectOption(''); await end.selectOption(''); await save.click();
+  await page.locator('.calendar-settings .settings-form-status').waitFor();
+  await selectPortalTab(page, 'calendar');
+  await page.waitForFunction(() => !document.querySelector('.calendar-event.is-gap'));
+});
